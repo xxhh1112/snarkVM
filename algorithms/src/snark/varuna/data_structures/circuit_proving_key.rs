@@ -27,7 +27,7 @@ use snarkvm_utilities::{
 use std::{cmp::Ordering, sync::Arc};
 
 /// Proving key for a specific circuit (i.e., R1CS matrices).
-#[derive(Clone, Debug, PartialEq, Eq)]
+#[derive(Clone, Debug, Eq)]
 pub struct CircuitProvingKey<E: PairingEngine, SM: SNARKMode> {
     /// The circuit verifying key.
     pub circuit_verifying_key: CircuitVerifyingKey<E>,
@@ -55,6 +55,12 @@ impl<E: PairingEngine, SM: SNARKMode> FromBytes for CircuitProvingKey<E, SM> {
         let committer_key = Arc::new(FromBytes::read_le(&mut reader)?);
 
         Ok(Self { circuit_verifying_key, circuit, committer_key })
+    }
+}
+
+impl<E: PairingEngine, SM: SNARKMode> PartialEq for CircuitProvingKey<E, SM> {
+    fn eq(&self, other: &Self) -> bool {
+        self.circuit.id == other.circuit.id
     }
 }
 
