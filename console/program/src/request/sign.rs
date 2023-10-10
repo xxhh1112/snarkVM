@@ -63,6 +63,8 @@ impl<N: Network> Request<N> {
         let tvk = (*signer * r).to_x_coordinate();
         // Compute the transition commitment `tcm` as `Hash(tvk)`.
         let tcm = N::hash_psd2(&[tvk])?;
+        // Compute the signer commitment `scm` as `Hash(signer)`.
+        let scm = N::hash_psd2(&[signer.deref().to_x_coordinate()])?;
 
         // Compute the function ID as `Hash(network_id, program_id, function_name)`.
         let function_id = N::hash_bhp1024(
@@ -231,6 +233,7 @@ impl<N: Network> Request<N> {
             sk_tag,
             tvk,
             tcm,
+            scm,
         })
     }
 }

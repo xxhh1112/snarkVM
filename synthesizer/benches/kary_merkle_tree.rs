@@ -76,12 +76,12 @@ fn batch_prove(c: &mut Criterion) {
     // Initialize the Merkle path circuit.
     let path = KaryMerklePath::<CurrentAleo, circuit::Sha3_256<CurrentAleo>, DEPTH, ARITY>::new(
         Mode::Private,
-        merkle_path.clone(),
+        merkle_path,
     );
     // Initialize the Merkle root.
     let root = <CircuitPathHasher as PathHash<CurrentAleo>>::Hash::new(Mode::Private, *merkle_tree.root());
     // Initialize the Merkle leaf.
-    let leaf: Vec<_> = Inject::new(Mode::Private, merkle_leaf.clone());
+    let leaf: Vec<_> = Inject::new(Mode::Private, merkle_leaf);
 
     // Verify the merkle path.
     let candidate = path.verify(&circuit_leaf_hasher, &circuit_path_hasher, &root, &leaf);

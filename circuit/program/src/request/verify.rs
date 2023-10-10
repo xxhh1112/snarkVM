@@ -16,7 +16,7 @@ use super::*;
 
 impl<A: Aleo> Request<A> {
     /// Returns `true` if the input IDs are derived correctly, the input records all belong to the signer,
-    /// and the signature is valid. tpk is passed separately so it can have a Mode different from Self.
+    /// and the signature is valid.
     ///
     /// Verifies (challenge == challenge') && (address == address') && (serial_numbers == serial_numbers') where:
     ///     challenge' := HashToScalar(r * G, pk_sig, pr_sig, signer, \[tvk, tcm, function ID, input IDs\])
@@ -52,15 +52,19 @@ impl<A: Aleo> Request<A> {
             None => A::halt("Missing input elements in request verification"),
         }
 
-        // Verify the transition public key and commitment are well-formed.
+        // Verify the transition public key and commitments are well-formed.
         let tpk_checks = {
             // Compute the transition commitment as `Hash(tvk)`.
             let tcm = A::hash_psd2(&[self.tvk.clone()]);
+            // Compute the signer commitment as `Hash(signer)`.
+            let scm = A::hash_psd2(&[self.signer.to_x_coordinate()]);
 
             // Ensure the transition public key matches with the saved one from the signature.
             tpk.is_equal(&self.to_tpk())
             // Ensure the computed transition commitment matches.
             & tcm.is_equal(&self.tcm)
+            // Ensure the computed signer commitment matches.
+            & scm.is_equal(&self.scm)
         };
 
         // Verify the signature.

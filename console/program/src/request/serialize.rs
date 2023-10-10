@@ -32,6 +32,7 @@ impl<N: Network> Serialize for Request<N> {
                 transition.serialize_field("sk_tag", &self.sk_tag)?;
                 transition.serialize_field("tvk", &self.tvk)?;
                 transition.serialize_field("tcm", &self.tcm)?;
+                transition.serialize_field("scm", &self.scm)?;
                 transition.end()
             }
             false => ToBytesSerializer::serialize_with_size_encoding(self, serializer),
@@ -68,6 +69,8 @@ impl<'de, N: Network> Deserialize<'de> for Request<N> {
                     DeserializeExt::take_from_value::<D>(&mut request, "tvk")?,
                     // Retrieve the `tcm`.
                     DeserializeExt::take_from_value::<D>(&mut request, "tcm")?,
+                    // Retrieve the `scm`.
+                    DeserializeExt::take_from_value::<D>(&mut request, "scm")?,
                 )))
             }
             false => FromBytesDeserializer::<Self>::deserialize_with_size_encoding(deserializer, "request"),
