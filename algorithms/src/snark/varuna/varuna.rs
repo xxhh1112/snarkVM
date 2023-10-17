@@ -663,7 +663,7 @@ where
         let mut input_domains = BTreeMap::new();
         let mut circuit_infos = BTreeMap::new();
         let mut circuit_ids = Vec::with_capacity(keys_to_inputs.len());
-        for (vk, public_inputs_i) in keys_to_inputs.iter() {
+        for (&vk, &public_inputs_i) in keys_to_inputs.iter() {
             max_num_constraints = max_num_constraints.max(vk.circuit_info.num_constraints);
             max_num_variables = max_num_variables.max(vk.circuit_info.num_variables);
 
@@ -673,23 +673,24 @@ where
             let input_domain = EvaluationDomain::<E::Fr>::new(vk.circuit_info.num_public_inputs).unwrap();
             input_domains.insert(vk.id, input_domain);
 
-            let (padded_public_inputs_i, parsed_public_inputs_i): (Vec<_>, Vec<_>) = {
-                public_inputs_i
-                    .iter()
-                    .map(|input| {
-                        let input = input.borrow().to_field_elements().unwrap();
-                        let mut new_input = Vec::with_capacity((1 + input.len()).max(input_domain.size()));
-                        new_input.push(E::Fr::one());
-                        new_input.extend_from_slice(&input);
-                        new_input.resize(input.len().max(input_domain.size()), E::Fr::zero());
-                        if cfg!(debug_assertions) {
-                            println!("Number of padded public variables: {}", new_input.len());
-                        }
-                        let unformatted = prover::ConstraintSystem::unformat_public_input(&new_input);
-                        (new_input, unformatted)
-                    })
-                    .unzip()
-            };
+            let mut padded_public_inputs_i = Vec::with_capacity(input_domain.size());
+            let mut parsed_public_inputs_i = Vec::with_capacity(input_domain.size());
+            for input in public_inputs_i {
+                let input = input.borrow().to_field_elements().unwrap();
+                let mut new_input = Vec::with_capacity((1 + input.len()).max(input_domain.size()));
+                if input.len() > input_domain.size() - 1 {
+                    return Err(SNARKError::PublicInputSizeMismatch);
+                }
+                new_input.push(E::Fr::one()); // Hardcoded first public One variable
+                new_input.extend_from_slice(&input);
+                new_input.resize(input.len().max(input_domain.size()), E::Fr::zero());
+                if cfg!(debug_assertions) {
+                    println!("Number of padded public variables: {}", new_input.len());
+                }
+                let unformatted = prover::ConstraintSystem::unformat_public_input(&new_input);
+                padded_public_inputs_i.push(new_input);
+                parsed_public_inputs_i.push(unformatted);
+            }
             let circuit_id = vk.id;
             public_inputs.insert(circuit_id, parsed_public_inputs_i);
             padded_public_vec.push(padded_public_inputs_i);
