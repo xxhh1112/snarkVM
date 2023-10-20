@@ -18,6 +18,8 @@ use crate::{
 };
 use snarkvm_fields::PrimeField;
 
+use console::prelude::anyhow;
+
 use std::rc::Rc;
 
 pub type Scope = String;
@@ -91,9 +93,33 @@ impl<F: PrimeField> R1CS<F> {
         self.counter.add_constraint(constraint);
     }
 
-    /// Returns `true` if all constraints in the environment are satisfied.
-    pub fn is_satisfied(&self) -> bool {
-        self.constraints.iter().all(|constraint| constraint.is_satisfied())
+    /// Returns `true` if both
+    /// - all constraints in the environment are satisfied.
+    /// - all constraints use variables corresponding to the declared variables
+    pub fn is_satisfied(&self) -> Result<bool> {
+        let constraints_satisfied = self.constraints.iter().all(|constraint| constraint.is_satisfied());
+        if !constraints_satisfied {
+            return Ok(false);
+        }
+        Ok(self.constraints.iter().all(|constraint| {
+            let (a, b, c) = constraint.to_terms();
+            [a, b, c].into_iter().all(|m| {
+                m.to_terms()
+                    .into_iter()
+                    .try_for_each(|(var, _)| match var {
+                        Variable::Constant(_value) => Err(anyhow!("invalid const found")),
+                        Variable::Private(index, value) => {
+                            let var = self.private.get(*index as usize).ok_or(anyhow!("invalid index"))?;
+                            (var.value() == **value).then_some(()).ok_or(anyhow!("value mismatch"))
+                        }
+                        Variable::Public(index, value) => {
+                            let var = self.public.get(*index as usize).ok_or(anyhow!("invalid index"))?;
+                            (var.value() == **value).then_some(()).ok_or(anyhow!("value mismatch"))
+                        }
+                    })
+                    .is_ok()
+            })
+        }))
     }
 
     /// Returns `true` if all constraints in the current scope are satisfied.

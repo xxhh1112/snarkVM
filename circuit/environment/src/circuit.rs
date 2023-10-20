@@ -181,7 +181,7 @@ impl Environment for Circuit {
 
     /// Returns `true` if all constraints in the environment are satisfied.
     fn is_satisfied() -> bool {
-        CIRCUIT.with(|circuit| (**circuit).borrow().is_satisfied())
+        CIRCUIT.with(|circuit| (**circuit).borrow().is_satisfied()).is_ok()
     }
 
     /// Returns `true` if all constraints in the current scope are satisfied.
