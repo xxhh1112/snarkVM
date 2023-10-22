@@ -135,6 +135,7 @@ impl<N: Network> StackExecute<N> for Stack<N> {
         &self,
         mut call_stack: CallStack<N>,
         console_caller: Option<ProgramID<N>>,
+        root_tcm: Option<Field<N>>,
     ) -> Result<Response<N>> {
         let timer = timer!("Stack::execute_function");
 
@@ -152,6 +153,8 @@ impl<N: Network> StackExecute<N> for Stack<N> {
             console_request.network_id()
         );
 
+        // We can only have a root_tcm if this request was called by another request
+        ensure!(console_caller.is_some() == root_tcm.is_some());
         // Determine if this is the top-level caller.
         let console_is_root = console_caller.is_none();
 
@@ -193,6 +196,20 @@ impl<N: Network> StackExecute<N> for Stack<N> {
         // Initialize the registers.
         let mut registers = Registers::new(call_stack, self.get_register_types(function.name())?.clone());
 
+        // Set the root tcm, from a parent request or the current request.
+        // inject the `root_tcm` as `Mode::Private`.
+        if let Some(root_tcm) = root_tcm {
+            registers.set_root_tcm(root_tcm);
+            let root_tcm_circuit = circuit::Field::<A>::new(circuit::Mode::Private, root_tcm);
+            registers.set_root_tcm_circuit(root_tcm_circuit);
+        } else {
+            registers.set_root_tcm(*console_request.tcm());
+            let root_tcm_circuit = circuit::Field::<A>::new(circuit::Mode::Private, *console_request.tcm());
+            registers.set_root_tcm_circuit(root_tcm_circuit);
+        }
+
+        let root_tcm = Some(registers.root_tcm_circuit()?);
+
         use circuit::{Eject, Inject};
 
         // Inject the transition public key `tpk` as `Mode::Public`.
@@ -208,7 +225,7 @@ impl<N: Network> StackExecute<N> for Stack<N> {
         let caller = Ternary::ternary(&is_root, request.signer(), &parent);
 
         // Ensure the request has a valid signature, inputs, and transition view key.
-        A::assert(request.verify(&input_types, &tpk));
+        A::assert(request.verify(&input_types, &tpk, root_tcm));
         lap!(timer, "Verify the circuit request");
 
         // Set the transition signer.

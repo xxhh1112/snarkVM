@@ -1520,14 +1520,17 @@ mod sanity_checks {
         let program_id = *program.id();
         // Retrieve the input types.
         let input_types = program.get_function(&function_name).unwrap().input_types();
+
+        let root_tcm = None;
         // Compute the request.
-        let request = Request::sign(private_key, program_id, function_name, inputs.iter(), &input_types, rng).unwrap();
+        let request =
+            Request::sign(private_key, program_id, function_name, inputs.iter(), &input_types, root_tcm, rng).unwrap();
         // Initialize the assignments.
         let assignments = Assignments::<N>::default();
         // Initialize the call stack.
         let call_stack = CallStack::CheckDeployment(vec![request], *private_key, assignments.clone());
         // Synthesize the circuit.
-        let _response = stack.execute_function::<A>(call_stack, None).unwrap();
+        let _response = stack.execute_function::<A>(call_stack, None, None).unwrap();
         // Retrieve the assignment.
         let assignment = assignments.read().last().unwrap().0.clone();
         assignment

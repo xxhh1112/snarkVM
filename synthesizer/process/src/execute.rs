@@ -31,6 +31,10 @@ impl<N: Network> Process<N> {
         #[cfg(feature = "aleo-cli")]
         println!("{}", format!(" • Executing '{locator}'...",).dimmed());
 
+        // This is the root request and does not have a caller
+        let caller = None;
+        // This is the root request and we do not have a root_tcm to pass on
+        let root_tcm = None;
         // Initialize the trace.
         let trace = Arc::new(RwLock::new(Trace::new()));
         // Initialize the call stack.
@@ -40,7 +44,7 @@ impl<N: Network> Process<N> {
         // Retrieve the stack.
         let stack = self.get_stack(request.program_id())?;
         // Execute the circuit.
-        let response = stack.execute_function::<A>(call_stack, None)?;
+        let response = stack.execute_function::<A>(call_stack, caller, root_tcm)?;
         lap!(timer, "Execute the function");
 
         // Extract the trace.

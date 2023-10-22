@@ -51,6 +51,10 @@ pub struct Registers<N: Network, A: circuit::Aleo<Network = N>> {
     signer: Option<Address<N>>,
     /// The transition signer, as a circuit.
     signer_circuit: Option<circuit::Address<A>>,
+    /// The root transition commitment.
+    root_tcm: Option<Field<N>>,
+    /// The root transition commitment, as a circuit.
+    root_tcm_circuit: Option<circuit::Field<A>>,
     /// The transition caller.
     caller: Option<Address<N>>,
     /// The transition caller, as a circuit.
@@ -72,6 +76,8 @@ impl<N: Network, A: circuit::Aleo<Network = N>> Registers<N, A> {
             circuit_registers: IndexMap::new(),
             signer: None,
             signer_circuit: None,
+            root_tcm: None,
+            root_tcm_circuit: None,
             caller: None,
             caller_circuit: None,
             tvk: None,

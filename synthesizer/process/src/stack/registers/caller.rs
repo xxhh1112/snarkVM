@@ -27,6 +27,19 @@ impl<N: Network, A: circuit::Aleo<Network = N>> RegistersSigner<N> for Registers
         self.signer = Some(signer);
     }
 
+    /// Returns the root transition commitment.
+    #[inline]
+    fn root_tcm(&self) -> Result<Field<N>> {
+        self.root_tcm.ok_or_else(|| anyhow!("root tcm (console) is not set in the registers."))
+    }
+
+    /// Sets the transition signer.
+    #[inline]
+    fn set_root_tcm(&mut self, root_tcm: Field<N>) {
+        assert!(self.root_tcm.is_none()); // TODO: return an error, or just skip
+        self.root_tcm = Some(root_tcm);
+    }
+
     /// Returns the transition caller.
     #[inline]
     fn caller(&self) -> Result<Address<N>> {
@@ -63,6 +76,19 @@ impl<N: Network, A: circuit::Aleo<Network = N>> RegistersSignerCircuit<N, A> for
     #[inline]
     fn set_signer_circuit(&mut self, signer_circuit: circuit::Address<A>) {
         self.signer_circuit = Some(signer_circuit);
+    }
+
+    /// Returns the root transition commitment, as a circuit.
+    #[inline]
+    fn root_tcm_circuit(&self) -> Result<circuit::Field<A>> {
+        self.root_tcm_circuit.clone().ok_or_else(|| anyhow!("Root tcm (circuit) is not set in the registers."))
+    }
+
+    /// Sets the root transition commitment, as a circuit.
+    #[inline]
+    fn set_root_tcm_circuit(&mut self, root_tcm_circuit: circuit::Field<A>) {
+        assert!(self.root_tcm_circuit.is_none()); // TODO: return an error, or just skip
+        self.root_tcm_circuit = Some(root_tcm_circuit);
     }
 
     /// Returns the transition caller, as a circuit.

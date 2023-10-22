@@ -41,6 +41,7 @@ pub trait CallTrait<N: Network> {
         stack: &(impl StackEvaluate<N> + StackExecute<N> + StackMatches<N> + StackProgram<N>),
         registers: &mut (
                  impl RegistersCall<N>
+                 + RegistersSigner<N>
                  + RegistersSignerCircuit<N, A>
                  + RegistersLoadCircuit<N, A>
                  + RegistersStoreCircuit<N, A>
@@ -127,6 +128,7 @@ impl<N: Network> CallTrait<N> for Call<N> {
         stack: &(impl StackEvaluate<N> + StackExecute<N> + StackMatches<N> + StackProgram<N>),
         registers: &mut (
                  impl RegistersCall<N>
+                 + RegistersSigner<N>
                  + RegistersSignerCircuit<N, A>
                  + RegistersLoadCircuit<N, A>
                  + RegistersStoreCircuit<N, A>
@@ -164,6 +166,9 @@ impl<N: Network> CallTrait<N> for Call<N> {
                 (stack.clone(), resource)
             }
         };
+
+        // If we are not handling the root request, retrieve the root request's tcm
+        let root_tcm = registers.root_tcm().ok();
 
         // If the operator is a closure, retrieve the closure and compute the output.
         let outputs = if let Ok(closure) = substack.program().get_closure(resource) {
@@ -213,6 +218,7 @@ impl<N: Network> CallTrait<N> for Call<N> {
                             *function.name(),
                             inputs.iter(),
                             &function.input_types(),
+                            root_tcm,
                             rng,
                         )?;
 
@@ -225,7 +231,7 @@ impl<N: Network> CallTrait<N> for Call<N> {
                         authorization.push(request.clone());
 
                         // Execute the request.
-                        let response = substack.execute_function::<A>(call_stack, console_caller)?;
+                        let response = substack.execute_function::<A>(call_stack, console_caller, root_tcm)?;
 
                         // Return the request and response.
                         (request, response)
@@ -238,6 +244,7 @@ impl<N: Network> CallTrait<N> for Call<N> {
                             *function.name(),
                             inputs.iter(),
                             &function.input_types(),
+                            root_tcm,
                             rng,
                         )?;
 
@@ -247,7 +254,7 @@ impl<N: Network> CallTrait<N> for Call<N> {
                         call_stack.push(request.clone())?;
 
                         // Execute the request.
-                        let response = substack.execute_function::<A>(call_stack, console_caller)?;
+                        let response = substack.execute_function::<A>(call_stack, console_caller, root_tcm)?;
                         // Return the request and response.
                         (request, response)
                     }
@@ -269,7 +276,8 @@ impl<N: Network> CallTrait<N> for Call<N> {
                         let console_response =
                             substack.evaluate_function::<A>(registers.call_stack().replicate(), console_caller)?;
                         // Execute the request.
-                        let response = substack.execute_function::<A>(registers.call_stack(), console_caller)?;
+                        let response =
+                            substack.execute_function::<A>(registers.call_stack(), console_caller, root_tcm)?;
                         // Ensure the values are equal.
                         if console_response.outputs() != response.outputs() {
                             #[cfg(debug_assertions)]

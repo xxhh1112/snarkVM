@@ -34,15 +34,18 @@ impl<N: Network> Stack<N> {
         let input_types = self.get_function(&function_name)?.input_types();
         lap!(timer, "Retrieve the input types");
 
+        // This is the root request, so there is no root_tcm yet
+        let root_tcm = None;
+        let caller = None;
         // Compute the request.
-        let request = Request::sign(private_key, program_id, function_name, inputs, &input_types, rng)?;
+        let request = Request::sign(private_key, program_id, function_name, inputs, &input_types, root_tcm, rng)?;
         lap!(timer, "Compute the request");
         // Initialize the authorization.
         let authorization = Authorization::new(request.clone());
         // Construct the call stack.
         let call_stack = CallStack::Authorize(vec![request], *private_key, authorization.clone());
         // Construct the authorization from the function.
-        let _response = self.execute_function::<A>(call_stack, None)?;
+        let _response = self.execute_function::<A>(call_stack, caller, root_tcm)?;
         finish!(timer, "Construct the authorization from the function");
 
         // Return the authorization.

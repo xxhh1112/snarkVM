@@ -72,6 +72,7 @@ pub trait StackExecute<N: Network> {
         &self,
         call_stack: CallStack<N>,
         console_caller: Option<ProgramID<N>>,
+        root_tcm: Option<Field<N>>,
     ) -> Result<Response<N>>;
 }
 
