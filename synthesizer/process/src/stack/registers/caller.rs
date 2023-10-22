@@ -36,7 +36,6 @@ impl<N: Network, A: circuit::Aleo<Network = N>> RegistersSigner<N> for Registers
     /// Sets the transition signer.
     #[inline]
     fn set_root_tcm(&mut self, root_tcm: Field<N>) {
-        assert!(self.root_tcm.is_none()); // TODO: return an error, or just skip
         self.root_tcm = Some(root_tcm);
     }
 
@@ -87,7 +86,6 @@ impl<N: Network, A: circuit::Aleo<Network = N>> RegistersSignerCircuit<N, A> for
     /// Sets the root transition commitment, as a circuit.
     #[inline]
     fn set_root_tcm_circuit(&mut self, root_tcm_circuit: circuit::Field<A>) {
-        assert!(self.root_tcm_circuit.is_none()); // TODO: return an error, or just skip
         self.root_tcm_circuit = Some(root_tcm_circuit);
     }
 
