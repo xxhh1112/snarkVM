@@ -59,10 +59,8 @@ finalize initialize_data:
 
 function branch_with_mapping:
     input r0 as boolean.public;
-    input r1 as u8.public;
-    input r2 as u8.public;
-    async branch_with_mapping r0 r1 r2 into r3;
-    output r3 as test_branch.aleo/branch_with_mapping.future;
+    async branch_with_mapping r0 into r1;
+    output r1 as test_branch.aleo/branch_with_mapping.future;
 
 finalize branch_with_mapping:
     input r0 as boolean.public;
